@@ -6,11 +6,12 @@ from flask_debugtoolbar import DebugToolbarExtension
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "oh-so-secret"
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 debug = DebugToolbarExtension(app)
 
 
-RESPONSES_KEY = "responses"
+responses = []
 
 
 @app.route('/')
@@ -23,7 +24,6 @@ def home_page():
 @app.route('/begin', methods=['POST'])
 def begin_survey():
     """Clear Session and redirect to first question """
-    session[RESPONSES_KEY] = []
 
     return redirect("/questions/0")
 
@@ -31,7 +31,6 @@ def begin_survey():
 @app.route('/questions/<int:id>')
 def show_questions(id):
     """Show questions by index number"""
-    responses = session.get(RESPONSES_KEY)
 
     questions = satisfaction_survey.questions
     question = questions[id]
@@ -41,14 +40,12 @@ def show_questions(id):
 
 @app.route('/answer', methods=['POST'])
 def save_answers():
-    """Save response and redirect to next question unless survey over then Thank them """
+    """Save response and redirect to next question unless survey over then thank them """
     choice = request.form['choice']
 
     # add this response to the session
-    responses = session[RESPONSES_KEY]
     responses.append(choice)
-    session[RESPONSES_KEY] = responses
-
+    print(responses)
     if (len(responses) == len(satisfaction_survey.questions)):
         # They've answered all the questions! Thank them.
         return redirect("/complete")
